@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: plantcare
+      POSTGRES_USER: plantcare
+      POSTGRES_PASSWORD: plantcare_dev_only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plantcare -d plantcare"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes: [plantcare_db:/var/lib/postgresql/data]
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://plantcare:plantcare_dev_only@db:5432/plantcare
+      API_KEY: dev-plant-api-key
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+      OFFLINE_AFTER_SECONDS: 12
+      WATERING_DURATION_SECONDS: 6
+      WATERING_COOLDOWN_SECONDS: 30
+    ports: ["8000:8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+        VITE_API_KEY: dev-plant-api-key
+    ports: ["8080:80"]
+    depends_on: [backend]
+
+  simulator:
+    build:
+      context: ./sensor_simulator
+      dockerfile: Dockerfile
+    environment:
+      API_URL: http://backend:8000
+      API_KEY: dev-plant-api-key
+      DEVICE_ID: PLANT-001
+      INTERVAL_SECONDS: 3
+      START_MOISTURE: 55
+    depends_on: [backend]
+
+volumes:
+  plantcare_db:

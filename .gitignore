@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.env
+*.db
+backend/plant_care.db
+backend/test_plant_care.db
+frontend/node_modules/
+frontend/dist/
+.DS_Store
+*.log
+.vscode/
+.idea/
